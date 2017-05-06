@@ -119,7 +119,8 @@ public class DyfusionCalculator {
 
 			}
 			cellsArr = cellsArrNextStep;
-			csvList.add(new CSVModel(k + 1, (k + 1) * deltaTime, cellsArr));
+			double cellsArrCopy[] = deepArrCopy(cellsArr);
+			csvList.add(new CSVModel(k + 1, (k + 1) * deltaTime, cellsArrCopy));
 			System.out.println("Step: " + (k + 1) + " Time: " + ((k + 1) * deltaTime));
 			cp.setCellsToPrint(cellsArr);
 			cp.printCells();
@@ -132,4 +133,14 @@ public class DyfusionCalculator {
 
 	}
 
+	private static double[] deepArrCopy(double arrToCopy[]){
+		double result[] = new double[arrToCopy.length];
+		
+		for(int i = 0 ; i < arrToCopy.length;i++){
+			result[i] = arrToCopy[i];
+		}
+		
+		return result;
+	}
+	
 }
