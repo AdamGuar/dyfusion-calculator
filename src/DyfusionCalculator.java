@@ -1,9 +1,12 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-import console.CellsPrinter;
+import output.console.CellsPrinter;
+import output.csv.*;
 
 public class DyfusionCalculator {
 	
@@ -13,7 +16,7 @@ public class DyfusionCalculator {
 	
 	
 	//Problem constants
-	public static final int TEMP = 727;
+	public static final int TEMP = 800;
 	public static final int TEMP_K = 273 + TEMP;
 	public static final int Q = 140000;
 	public static final double R = 8.3144;
@@ -25,9 +28,11 @@ public class DyfusionCalculator {
 	public static final double FRACTION = (D * deltaTime)/deltaXPower2;
 	
 	
+	
 	//Program constants
 	public static final int ARRAY_SIZE = 100;
 	public static final int INITIAL_HIGH_CARBON_SIZE = 6;
+	public static final int INITIAL_KSI= INITIAL_HIGH_CARBON_SIZE+1;
 	
 
 	public static void main(String[] args) {
@@ -64,7 +69,8 @@ public class DyfusionCalculator {
 	}
    
 	
-	for(int k=0;k<timeSteps;k++){
+    
+/*	for(int k=0;k<timeSteps;k++){
 	
 		for (int j=0;j<ARRAY_SIZE;j++){
 			double cellPlusOne;
@@ -80,8 +86,40 @@ public class DyfusionCalculator {
 	System.out.println("Step: "+(k+1)+" Time: "+((k+1)*deltaTime));
 	cp.setCellsToPrint(cellsArr);
 	cp.printCells();
+	}*/
+    
+    int ksi = INITIAL_KSI;
+   // double cGammaAlpha = 0.35;
+    List<CSVModel> csvList = new ArrayList<CSVModel>();
+    
+    for(int k=0;k<timeSteps;k++){
+    	cellsArrNextStep=cellsArr;
+		for (int j=0;j<ksi;j++){
+			double cellPlusOne;
+			double cellMinusOne;
+			if(j==0) cellMinusOne=cellsArr[j];
+			else cellMinusOne=cellsArr[j-1];
+			if(j==ksi-1) cellPlusOne=cellsArr[j];
+			else cellPlusOne=cellsArr[j+1];
+			
+			cellsArrNextStep[j] = ((1 -(2*FRACTION)) * cellsArr[j] ) + (FRACTION*(cellMinusOne+cellPlusOne));
+			
+			double cGammaAlpha=GSLineCalculator.calculateGAlpha(TEMP);
+			if(cellsArrNextStep[ksi-1]>=cGammaAlpha){
+				ksi=ksi+1;
+			}
+			
+		}
+	cellsArr = cellsArrNextStep;
+	csvList.add(new CSVModel(k+1,(k+1)*deltaTime,cellsArr));
+	System.out.println("Step: "+(k+1)+" Time: "+((k+1)*deltaTime));
+	cp.setCellsToPrint(cellsArr);
+	cp.printCells();
 	}
-	
+    
+    CSVGenerator csvGen = new CSVGenerator();
+    csvGen.setCellsToCSV(csvList);
+    csvGen.generateCSV(null);
 
 	}
 
