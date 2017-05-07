@@ -3,7 +3,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import output.console.CellsPrinter;
 import output.csv.*;
@@ -15,7 +17,8 @@ public class DyfusionCalculator {
 	public static final int Q = 140000;
 	public static final double R = 8.3144;
 	public static final double D0 = 0.000041;
-
+	public static final double deltaX = 0.1;
+	
 	// Program constants
 	public static final int ARRAY_SIZE = 100;
 	public static final int INITIAL_HIGH_CARBON_SIZE = 6;
@@ -70,7 +73,7 @@ public class DyfusionCalculator {
 		
 		
 		double deltaTemperature = 0 ;
-		System.out.println("Type delta of temperature(incrementation of temperature for every time step, zero means constant temperature:");
+		System.out.println("Type heating speed (0 means const temperature): ");
 		try {
 			deltaTemperature = Double.parseDouble(br.readLine());
 		} catch (NumberFormatException e) {
@@ -85,13 +88,16 @@ public class DyfusionCalculator {
 		int ksi = INITIAL_KSI;
 		// double cGammaAlpha = 0.35;
 		List<CSVModel> csvList = new ArrayList<CSVModel>();
+		double cellsArrCopy[] = deepArrCopy(cellsArr);
+		csvList.add(new CSVModel(0, 0, cellsArrCopy));
+		Map<String,String> austeniteMap = new HashMap<String,String>();
 		
 		double TEMP = initialTemperature;
 		for (int k = 0; k < timeSteps; k++) {
 			// Problem variables
 			double TEMP_K = 273 + TEMP;
 			double D = D0 * Math.exp(-Q / (R * TEMP_K)) * Math.pow(10, 10);
-			double deltaX = 0.1;
+
 			double deltaXPower2 = deltaX * deltaX;
 			double deltaTime = ((0.5) * deltaXPower2) / D;
 			double FRACTION = (D * deltaTime) / deltaXPower2;
@@ -119,18 +125,19 @@ public class DyfusionCalculator {
 
 			}
 			cellsArr = cellsArrNextStep;
-			double cellsArrCopy[] = deepArrCopy(cellsArr);
+			cellsArrCopy = deepArrCopy(cellsArr);
 			csvList.add(new CSVModel(k + 1, (k + 1) * deltaTime, cellsArrCopy));
 			System.out.println("Step: " + (k + 1) + " Time: " + ((k + 1) * deltaTime));
 			cp.setCellsToPrint(cellsArr);
 			cp.printCells();
-		TEMP = TEMP + deltaTemperature;	
+			austeniteMap.put(String.valueOf(((k + 1) * deltaTime)), String.valueOf(calcAustenite(deepArrCopy(cellsArr))));
+		TEMP = TEMP + (deltaTemperature*deltaTime);	
 		}
 
 		CSVGenerator csvGen = new CSVGenerator();
 		csvGen.setCellsToCSV(csvList);
 		csvGen.generateCSV(null);
-
+		csvGen.generateCSVAusteniteFraction(null, austeniteMap);
 	}
 
 	private static double[] deepArrCopy(double arrToCopy[]){
@@ -141,6 +148,17 @@ public class DyfusionCalculator {
 		}
 		
 		return result;
+	}
+	
+	
+	private static double calcAustenite(double cells[]){
+		int counter = 0;
+		for(int i = 0; i < cells.length;i++){
+			if(cells[i]>0.02) counter++;
+				
+		}
+		return (double) counter / (double) cells.length;
+		
 	}
 	
 }
