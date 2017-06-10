@@ -24,6 +24,8 @@ public class DyfusionCalculator {
 	public static final int ARRAY_SIZE = 100;
 	public static final int INITIAL_LOW_CARBON_SIZE = 2;
 	public static final int INITIAL_KSI = INITIAL_LOW_CARBON_SIZE;
+	public static final double C0 = 0.1;
+	public static final double C_alpha = 0.02;
 
 	public static void main(String[] args) {
 
@@ -32,10 +34,10 @@ public class DyfusionCalculator {
 		CellsPrinter cp = new CellsPrinter();
 
 		double cellsArr[] = new double[ARRAY_SIZE];
-		Arrays.fill(cellsArr, 0.1);
+		Arrays.fill(cellsArr, C0);
 
 		for (int i = 0; i < INITIAL_LOW_CARBON_SIZE; i++) {
-			cellsArr[i] = 0.02;
+			cellsArr[i] = C_alpha;
 		}
 
 		System.out.println("Initial cells:");
@@ -95,6 +97,7 @@ public class DyfusionCalculator {
 		double coalDelta = 0;
 		double coalCurrent = 0;
 		double coalPrevious = calculateCoalSum(cellsArr);
+		double austeniteSum = 0;
 
 		for (int k = 0; k < timeSteps; k++) {
 			// Problem variables
@@ -139,6 +142,15 @@ public class DyfusionCalculator {
 					String.valueOf(calcAustenite(deepArrCopy(cellsArr))));
 			TEMP = TEMP + (deltaTemperature * deltaTime);
 			coalPrevious = coalCurrent;
+			austeniteSum = austeniteSum + coalDelta;
+			double ferriteSum = (C0-C_alpha) * ksi;
+			int dksi = (int) Math.rint(austeniteSum/ferriteSum);
+		
+			if(dksi>ksi){
+				ksi = (int) Math.round(dksi);
+			}
+			System.out.println("Current ksi: "+ksi);
+			
 		}
 
 		CSVGenerator csvGen = new CSVGenerator();
